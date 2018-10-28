@@ -2,7 +2,6 @@ import numpy as np
 import Config as config
 from Utils import Function
 
-
 F = Function()
 
 class Network(object):
@@ -82,6 +81,13 @@ class Network(object):
     def lr_decay(self):
         if self.lr > config.lr_threshold:
             self.lr *= 0.1
+
+    def save_weight(self):
+        """
+        Save weights
+        :return: None
+        """
+        pass
 
     def eval(self, x, y, data_type):
         """
