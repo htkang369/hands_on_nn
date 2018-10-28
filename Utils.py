@@ -79,11 +79,9 @@ class Function(object):
     def sigmoid(self, x):
         return float(1)/(1+np.exp(-x))
 
-    def relu(self):
-        pass
-
-
-
+    def relu(self, x):
+        x[x < 0] = 0
+        return x
 
 class Preprocess(object):
     """
