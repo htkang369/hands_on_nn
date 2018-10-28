@@ -76,8 +76,8 @@ class Function(object):
         plt.figure()
         plt.imshow(img)
 
-    def sigmoid(self):
-        pass
+    def sigmoid(self, x):
+        return float(1)/(1+np.exp(-x))
 
     def relu(self):
         pass

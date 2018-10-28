@@ -1,10 +1,12 @@
 
 
-num_h1 = 300
+num_h1 = 200
 num_h2 = 100
 
 mu = 0
-sigma = 0.01
+sigma = 0.5
+lr_threshold = 1e-5
 
-learning_rate = 1e-3
-batch_size = 64
+learning_rate = 0.01
+batch_size = 256
+max_training_time = 100
