@@ -3,13 +3,13 @@
 
 cd hand_on_nn/
 
-train.py 
-$ python train.py
+For train
+$ python Main.py
 
-test_set
+For test
 $ python test_set.py
 
-inference
+For inference
 $ python inference.py
 
 
