@@ -3,17 +3,16 @@ Author : Hengtong Kang
 E-mail : hengtongkang@ufl.edu
 """
 
-from Utils import Data_util, Preprocess, Function
+from Utils import Data_util
 from Network import Network
 import Config as config
 
 import numpy as np
-import matplotlib.pyplot as plt
 import os
 
 def load_image():
     """
-    For loading data
+    For loading data and create one-hot encoding labels
     :return:
     """
     dir_path = os.path.dirname(os.path.realpath(__file__))  # get path
@@ -41,25 +40,22 @@ def load_image():
 
 
 if __name__ == '__main__':
-    train_x, train_y, test_x, test_y = load_image()
-    # train_x = np.random.random((64, 784))
-    # train_y = np.ones((64, 10))
-    # prep = Preprocess()
-    func = Function()
 
+    train_x, train_y, test_x, test_y = load_image()
     train_num = np.shape(train_x)[0]
     batch_size = config.batch_size
-    # batch_size = 8
+
     max_training_time = config.max_training_time
 
     net = Network()  # weight init
 
-    count = 1
+    count = 1  # training times
+    stop_flag = False  # early stopping flag
 
     for epoch in range(1, max_training_time + 1):
 
         index_vector = np.array([i for i in range(train_num)])
-        np.random.shuffle(index_vector)
+        np.random.shuffle(index_vector)  # SGD
 
         for j in range(1, train_num//batch_size + 1):
             batch_train_x = train_x[index_vector[(j-1):j * batch_size]][:]
@@ -69,11 +65,21 @@ if __name__ == '__main__':
             count += 1
 
             if count % 25 == 0:
-                print("After {0} mini batch training, the loss is {1}".format(count, batch_loss))
-                net.eval(batch_train_x, batch_train_y, "train_data", save=False)
-                net.eval(test_x, test_y, "test_data", save=True)
+                print("After {0} mini batch training, the current batch loss is {1}".format(count, batch_loss))
+                stop_flag = net.eval(train_x, train_y, "train_data", save=False)
+                _ = net.eval(test_x, test_y, "test_data", save=True)
+
+            if stop_flag:
+                break
+
+        if stop_flag:
+            break
+
         if epoch % 2 == 0:
             net.lr_decay()
+
+    print("Early stopping!")
+
 
 
 

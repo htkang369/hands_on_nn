@@ -74,7 +74,9 @@ class Function(object):
         img = np.array(image)
         img = img.reshape(28, 28)
         plt.figure()
+        # plt.show(block=False)
         plt.imshow(img)
+        plt.show()
 
     def sigmoid(self, x):
         return float(1)/(1+np.exp(-x))
