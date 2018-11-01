@@ -33,15 +33,22 @@ class Network(object):
         self.h1 = None
         self.h2 = None
 
+        self.vb1 = self.vb2 = self.vb3 = self.vw_i_h1 = self.vw_h1_h2 = self.vw_h2_o = 0
+
         self.batch_size = config.batch_size
         self.lr = config.learning_rate
+        self.mu = config.momentum
 
         self.name = config.activate
 
     def forward(self, input_data):
         if self.name is "sigmoid":
-            self.h1 = F.sigmoid(np.dot(input_data, self.w_i_h1) + self.b1)  # 64*784 784*300 64*300
-            self.h2 = F.sigmoid(np.dot(self.h1, self.w_h1_h2) + self.b2)  # 64*300 300*100 64*100
+            if config.dropout < 1:
+                self.h1 = self.dropout(F.sigmoid(np.dot(input_data, self.w_i_h1) + self.b1))
+                self.h2 = self.dropout(F.sigmoid(np.dot(self.h1, self.w_h1_h2) + self.b2))
+            else:
+                self.h1 = F.sigmoid(np.dot(input_data, self.w_i_h1) + self.b1)  # 64*784 784*300 64*300
+                self.h2 = F.sigmoid(np.dot(self.h1, self.w_h1_h2) + self.b2)  # 64*300 300*100 64*100
 
         if self.name is "relu":
             self.h1 = F.relu(np.dot(input_data, self.w_i_h1) + self.b1)  # 64*784 784*300 64*300
@@ -58,6 +65,7 @@ class Network(object):
     def back_propagation(self, x, l, pred):
         batch_size = self.batch_size
         lr = self.lr
+        mu = self.mu
 
         loss = pred - l  # 64*10
 
@@ -93,15 +101,33 @@ class Network(object):
                     self.w_h2_o.transpose()), deri_h2), self.w_h1_h2.transpose()), deri_h1), 0).transpose()
 
         # update
-        self.b1 = self.b1 - lr * d_b1
-        self.b2 = self.b2 - lr * d_b2
-        self.b3 = self.b3 - lr * d_b3
+        self.vb1 = mu * self.vb1 - lr * d_b1
+        self.b1 = self.b1 + self.vb1
+        self.vb2 = mu * self.vb2 - lr * d_b2
+        self.b2 = self.b2 + self.vb2
+        self.vb3 = mu * self.vb3 - lr * d_b3
+        self.b3 = self.b3 + self.vb3
 
-        self.w_h2_o = self.w_h2_o - lr * d_w_h2_o
-        self.w_h1_h2 = self.w_h1_h2 - lr * d_w_h1_h2
-        self.w_i_h1 = self.w_i_h1 - lr * d_w_i_h1
+        # self.b1 = self.b1 - lr * d_b1
+        # self.b2 = self.b2 - lr * d_b2
+        # self.b3 = self.b3 - lr * d_b3
+
+        self.vw_i_h1 = mu * self.vw_i_h1 - lr * d_w_i_h1
+        self.w_i_h1 += self.vw_i_h1
+        self.vw_h1_h2 = mu * self.vw_h1_h2 - lr * d_w_h1_h2
+        self.w_h1_h2 += self.vw_h1_h2
+        self.vw_h2_o = mu * self.vw_h2_o - lr * d_w_h2_o
+        self.w_h2_o += self.vw_h2_o
+
+        # self.w_h2_o = self.w_h2_o - lr * d_w_h2_o
+        # self.w_h1_h2 = self.w_h1_h2 - lr * d_w_h1_h2
+        # self.w_i_h1 = self.w_i_h1 - lr * d_w_i_h1
 
         return np.sum(np.sum(np.multiply(np.log(pred + config.eps), l))) * (float(1) / batch_size)
+
+    def dropout(self, x):
+        sample = np.random.binomial(n=1, p=config.dropout, size=x.shape)
+        return np.multiply(x, sample)
 
     def lr_decay(self):
         """
@@ -116,11 +142,20 @@ class Network(object):
         Save weights
         :return: None
         """
-        pass
+        np.save('b1.npy', self.b1)
+        np.save('b2.npy', self.b2)
+        np.save('b3.npy', self.b3)
+        np.save('w_i_h1', self.w_i_h1)
+        np.save('w_h1_h2', self.w_h1_h2)
+        np.save('w_h2_o', self.w_h2_o)
 
-    def eval(self, x, y, data_type):
+    def eval(self, x, y, data_type, save):
         """
         Evaluate performance
+        x:input data
+        y:input label
+        data_type: train or test
+        save: whether to save weight
         :return: None
         """
         pred = self.forward(x)
@@ -133,6 +168,10 @@ class Network(object):
             print("Train data accuracy is {0}".format(float(num_true)/np.shape(x)[0]))
         else:
             print("Test data accuracy is {0}".format(float(num_true)/np.shape(x)[0]))
+
+            if save:
+                if float(num_true)/np.shape(x)[0] >= 0.95:
+                    self.save_weight()
 
 
 

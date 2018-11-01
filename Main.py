@@ -54,6 +54,8 @@ if __name__ == '__main__':
 
     net = Network()  # weight init
 
+    count = 1
+
     for epoch in range(1, max_training_time + 1):
 
         index_vector = np.array([i for i in range(train_num)])
@@ -64,13 +66,15 @@ if __name__ == '__main__':
             batch_train_y = train_y[index_vector[(j-1):j * batch_size]][:]
             batch_pred = net.forward(batch_train_x)
             batch_loss = net.back_propagation(batch_train_x, batch_train_y, batch_pred)
+            count += 1
 
-            if j % 25 == 0:
-                print("After {0} mini batch training, the loss is {1}".format(epoch*j, batch_loss))
-                net.eval(batch_train_x, batch_train_y, "train_data")
-                net.eval(test_x, test_y, "test_data")
+            if count % 25 == 0:
+                print("After {0} mini batch training, the loss is {1}".format(count, batch_loss))
+                net.eval(batch_train_x, batch_train_y, "train_data", save=False)
+                net.eval(test_x, test_y, "test_data", save=True)
+        if epoch % 2 == 0:
+            net.lr_decay()
 
-        net.lr_decay()
 
 
 
